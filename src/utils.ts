@@ -37,11 +37,11 @@ export const getValidDuration = (dataByDate: DataByDate, key: string) => {
     .set('minute', 0)
     .diff(validStart, 'hour', true);
   const afternoonHour = validTo.diff(
-    dayjs(key).set('hour', 13).set('minute', 0),
+    dayjs.max([validStart, dayjs(key).set('hour', 13).set('minute', 0)]),
     'hour',
     true
   );
-  const validDuration = morningHour + afternoonHour;
+  const validDuration = Math.max(morningHour, 0) + afternoonHour;
   return Math.min(validDuration, 8);
 };
 
@@ -69,6 +69,8 @@ export const scan = (rawData: string) => {
 export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
   let lateCount = 0;
   let fullCount = 0;
+  let smallerThan7 = 0;
+  let from7To8 = 0;
   let data = {} as { [day: string]: number };
   const totalDays = Object.keys(dataNeedAnalyze).length;
   for (const key in dataNeedAnalyze) {
@@ -76,6 +78,11 @@ export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
     data[key] = duration;
     if (duration < 8) {
       lateCount++;
+      if (duration < 7) {
+        smallerThan7++;
+      } else {
+        from7To8++;
+      }
     } else {
       fullCount++;
     }
@@ -87,6 +94,8 @@ export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
     totalDays,
     latePercentage,
     data,
+    smallerThan7,
+    from7To8,
   };
 };
 

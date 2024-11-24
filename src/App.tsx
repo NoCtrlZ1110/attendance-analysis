@@ -20,7 +20,7 @@ import minMax from 'dayjs/plugin/minMax';
 import timezone from 'dayjs/plugin/timezone';
 import { useDisclosure } from '@mantine/hooks';
 import utc from 'dayjs/plugin/utc';
-import { BarChart, LineChart } from '@mantine/charts';
+import { BarChart, DonutChart, LineChart } from '@mantine/charts';
 
 dayjs.extend(minMax);
 dayjs.extend(utc);
@@ -40,7 +40,12 @@ export default function App() {
   const timeSeries = dateKeys.map((key) => ({
     date: key,
     duration: analysis.data?.[key],
-    color: analysis.data?.[key] === 8 ? 'green' : analysis.data?.[key] >7 ? 'yellow': 'red',
+    color:
+      analysis.data?.[key] === 8
+        ? 'green'
+        : analysis.data?.[key] > 7
+        ? 'yellow'
+        : 'red',
   }));
 
   const main = (raw: string) => {
@@ -118,13 +123,39 @@ export default function App() {
               </div>
             </div>
             <h2>Details</h2>
-            <BarChart
-              h={300}
-              data={timeSeries}
-              dataKey='date'
-              series={[{ name: 'duration', color: 'indigo.6', label: 'Duration' }]}
-              
-            />
+            <div style={{ display: 'flex' }}>
+              <BarChart
+                h={300}
+                data={timeSeries}
+                dataKey='date'
+                series={[
+                  { name: 'duration', color: 'indigo.6', label: 'Duration' },
+                ]}
+              />
+              <DonutChart
+                data={[
+                  {
+                    value: analysis?.fullCount,
+                    color: 'teal.6',
+                    name: 'Full',
+                  },
+                  {
+                    value: analysis?.smallerThan7,
+                    color: 'red.6',
+                    name: '< 7 hours',
+                  },
+                  {
+                    value: analysis?.from7To8,
+                    color: 'yellow.6',
+                    name: '>=7 hours',
+                  },
+                ]}
+                paddingAngle={10}
+                withLabelsLine
+                labelsType='value'
+                withLabels
+              />
+            </div>
             <Table>
               <Table.Thead>
                 <Table.Tr>
@@ -135,37 +166,39 @@ export default function App() {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {Object.keys(dataByDate).map((key, index) => (
-                  <Table.Tr
-                    key={key}
-                    style={{
-                      color: analysis.data?.[key] === 8 ? 'green' : '',
-                      backgroundColor:
-                        analysis.data?.[key] === 8
-                          ? ''
-                          : analysis.data?.[key] > 7
-                          ? '#f8e5b460'
-                          : '#f8bfb45f',
-                    }}
-                  >
-                    <Table.Td>
-                      <strong>{index + 1}</strong>
-                    </Table.Td>
-                    <Table.Td>
-                      <strong>{key}</strong>
-                    </Table.Td>
-                    <Table.Td>
-                      <strong>{round(analysis.data?.[key])}</strong>
-                    </Table.Td>
-                    <Table.Td>
-                      {dataByDate[key].map((d, index) => (
-                        <div key={index}>
-                          {dayjs(d).format('DD/MM/YYYY - HH:mm')}
-                        </div>
-                      ))}
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
+                {Object.keys(dataByDate)
+                  .reverse()
+                  .map((key, index) => (
+                    <Table.Tr
+                      key={key}
+                      style={{
+                        color: analysis.data?.[key] === 8 ? 'green' : '',
+                        backgroundColor:
+                          analysis.data?.[key] === 8
+                            ? ''
+                            : analysis.data?.[key] > 7
+                            ? '#f8e5b460'
+                            : '#f8bfb45f',
+                      }}
+                    >
+                      <Table.Td>
+                        <strong>{index + 1}</strong>
+                      </Table.Td>
+                      <Table.Td>
+                        <strong>{key}</strong>
+                      </Table.Td>
+                      <Table.Td>
+                        <strong>{round(analysis.data?.[key])}</strong>
+                      </Table.Td>
+                      <Table.Td>
+                        {dataByDate[key].map((d, index) => (
+                          <div key={index}>
+                            {dayjs(d).format('DD/MM/YYYY - HH:mm')}
+                          </div>
+                        ))}
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
               </Table.Tbody>
             </Table>
           </>
