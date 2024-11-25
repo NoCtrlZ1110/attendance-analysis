@@ -7,14 +7,18 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "yarn build",
+    "deploy": "gh-pages -d dist"
   },
+  "homepage": "https://teko.vanhuy.dev/",
   "dependencies": {
     "@mantine/charts": "^7.14.2",
     "@mantine/core": "^7.14.2",
     "@mantine/form": "^7.14.2",
     "@mantine/hooks": "^7.14.2",
     "dayjs": "^1.11.13",
+    "gh-pages": "^6.2.0",
     "postcss-preset-mantine": "^1.17.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

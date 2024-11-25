@@ -108,7 +108,10 @@ export default function App() {
 
   return (
     <MantineProvider theme={theme}>
-      <Container size='md'>
+      <Container
+        size='md'
+        style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
+      >
         <LoadingOverlay visible={isLoading} />
         <header
           style={{
@@ -219,9 +222,9 @@ export default function App() {
                     fontSize: '24px',
                     fontWeight: 'bold',
                     color:
-                      analysis?.latePercentage > 20
+                      analysis?.latePercentage! > 20
                         ? 'red'
-                        : analysis?.latePercentage > 15
+                        : analysis?.latePercentage! > 15
                         ? '#fbda05'
                         : 'green',
                   }}
@@ -236,9 +239,9 @@ export default function App() {
                   fontSize: 20,
                   marginTop: '1em',
                   color:
-                    analysis?.latePercentage > 20
+                    analysis?.latePercentage! > 20
                       ? 'red'
-                      : analysis?.latePercentage > 15
+                      : analysis?.latePercentage! > 15
                       ? '#fbda05'
                       : 'green',
                 }}
@@ -267,17 +270,17 @@ export default function App() {
               <DonutChart
                 data={[
                   {
-                    value: analysis?.fullCount,
+                    value: analysis?.fullCount!,
                     color: 'teal.6',
                     name: 'Full',
                   },
                   {
-                    value: analysis?.smallerThan7,
+                    value: analysis?.smallerThan7!,
                     color: 'red.6',
                     name: '< 7 hours',
                   },
                   {
-                    value: analysis?.from7To8,
+                    value: analysis?.from7To8!,
                     color: 'yellow.6',
                     name: '>=7 hours',
                   },
@@ -308,7 +311,7 @@ export default function App() {
                         backgroundColor:
                           analysis.data?.[key] === 8
                             ? ''
-                            : analysis.data?.[key] > 7
+                            : analysis.data?.[key]! > 7
                             ? '#f8e5b460'
                             : '#f8bfb45f',
                       }}
@@ -335,6 +338,23 @@ export default function App() {
             </Table>
           </>
         )}
+        <div style={{ padding: '1em' }} />
+        <footer
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginTop: 'auto',
+            padding: '1em',
+          }}
+        >
+          <a href='#' title='page counter'>
+            <img
+              src='https://counter6.optistats.ovh/private/freecounterstat.php?c=a4sgglx4nkf9cctfk3usbf7kwshbg1cd'
+              title='page counter'
+              alt='page counter'
+            />
+          </a>
+        </footer>
       </Container>
     </MantineProvider>
   );
