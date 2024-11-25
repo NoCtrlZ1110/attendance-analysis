@@ -92,9 +92,12 @@ export default function App() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setRemainingTime(
-        dayjs.duration(dayjs(todayLeaveTime).diff(dayjs())).format('HH:mm:ss')
-      );
+      const remain = dayjs.duration(dayjs(todayLeaveTime).diff(dayjs()));
+      if (remain.asSeconds() <= 0) {
+        setRemainingTime('00:00:00');
+        return;
+      }
+      setRemainingTime(remain.format('HH:mm:ss'));
     }, 1000);
 
     return () => clearInterval(interval);
