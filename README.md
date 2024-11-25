@@ -1,6 +1,6 @@
 # Attendance Analysis
 
-### A gift for our TekoBros!
+### A gift for my TekoBros!
 
 ![Example](./example.png "Example")
 
