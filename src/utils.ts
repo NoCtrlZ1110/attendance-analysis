@@ -14,7 +14,7 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
 export const getValidMoment = (records: Date[]) => {
-  if (records?.length < 2) return [];
+  if (records?.length === 0) return [];
   const validStart = dayjs.max([
     dayjs.min(records.map((d) => dayjs(d).tz('Asia/Ho_Chi_Minh')))!,
     dayjs(records[0]).set('hour', 8).set('minute', 30),
@@ -77,11 +77,13 @@ export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
     const duration = getValidDuration(dataNeedAnalyze, key);
     data[key] = duration;
     if (duration < 8) {
-      lateCount++;
-      if (duration < 7) {
-        smallerThan7++;
-      } else {
-        from7To8++;
+      if (key !== dayjs().format('YYYY-MM-DD')) {
+        lateCount++;
+        if (duration < 7) {
+          smallerThan7++;
+        } else {
+          from7To8++;
+        }
       }
     } else {
       fullCount++;
@@ -100,3 +102,14 @@ export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
 };
 
 export const round = (num = 0) => Math.round(num * 100) / 100;
+
+// get today leave time
+export const getTodayLeaveTime = (dataByDate: DataByDate) => {
+  const today = dayjs().format('YYYY-MM-DD');
+  const records = dataByDate[today] || [];
+  const [validStart] = getValidMoment(records);
+  return dayjs.min([
+    validStart?.add(9, 'hour'),
+    dayjs().set('hour', 18).set('minute', 0),
+  ]);
+};
