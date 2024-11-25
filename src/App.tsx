@@ -72,9 +72,12 @@ export default function App() {
 
   const calculateProgress = () => {
     setTodayProgress(
-      (dayjs().diff(todayStartTime, 'minute') /
-        dayjs(todayLeaveTime).diff(todayStartTime, 'minute')) *
+      Math.min(
+        (dayjs().diff(todayStartTime, 'minute') /
+          dayjs(todayLeaveTime).diff(todayStartTime, 'minute')) *
+          100,
         100
+      )
     );
   };
 
