@@ -21,6 +21,7 @@ import {
   Table,
   Textarea,
 } from '@mantine/core';
+import GitHubButton from 'react-github-btn';
 
 import { Analysis } from './type';
 import GithubIcon from './assets/github-mark.svg';
@@ -299,7 +300,7 @@ export default function App() {
               <div>
                 {remainingTime && (
                   <>
-                    <strong> {remainingTime}</strong> remaining to go home
+                    <strong> {remainingTime}</strong> remaining
                   </>
                 )}
               </div>
@@ -484,8 +485,7 @@ export default function App() {
               alt='page counter'
             />
           </a>
-          <a
-            className='github-button'
+          <GitHubButton
             href='https://github.com/NoCtrlZ1110/attendance-analysis'
             data-color-scheme='no-preference: light; light: light; dark: dark;'
             data-icon='octicon-star'
@@ -494,7 +494,7 @@ export default function App() {
             aria-label='Star NoCtrlZ1110/attendance-analysis on GitHub'
           >
             Star
-          </a>
+          </GitHubButton>
         </footer>
       </Container>
     </MantineProvider>
