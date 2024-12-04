@@ -1,29 +1,36 @@
-import '@mantine/core/styles.css';
-import '@mantine/charts/styles.css';
-import './index.css';
+import { useEffect, useState } from 'react';
 
+import dayjs from 'dayjs';
+
+import utc from 'dayjs/plugin/utc';
+import minMax from 'dayjs/plugin/minMax';
+import { Calendar } from '@mantine/dates';
+import timezone from 'dayjs/plugin/timezone';
+import duration from 'dayjs/plugin/duration';
+import { BarChart, DonutChart } from '@mantine/charts';
 import {
   Button,
   Code,
   Container,
+  createTheme,
+  Divider,
+  List,
   LoadingOverlay,
   MantineProvider,
   Progress,
   Table,
   Textarea,
-  createTheme,
 } from '@mantine/core';
-import { analyze, getTodayLeaveTime, round, scan } from './utils';
-import { useEffect, useState } from 'react';
 
 import { Analysis } from './type';
-import dayjs from 'dayjs';
-import minMax from 'dayjs/plugin/minMax';
-import timezone from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
-import duration from 'dayjs/plugin/duration';
-import { BarChart, DonutChart } from '@mantine/charts';
 import GithubIcon from './assets/github-mark.svg';
+import { analyze, getTodayLeaveTime, round, scan } from './utils';
+
+import '@mantine/core/styles.css';
+import '@mantine/charts/styles.css';
+import '@mantine/dates/styles.css';
+
+import './index.css';
 
 dayjs.extend(minMax);
 dayjs.extend(utc);
@@ -32,10 +39,14 @@ dayjs.extend(duration);
 dayjs.tz.setDefault(dayjs.tz.guess());
 
 const theme = createTheme({});
+const RAW_DATA_KEY = 'rawData';
+const IGNORE_DATES_KEY = 'ignoreDates';
 
 export default function App() {
   const [isLoading, setLoading] = useState(true);
-  const [rawData, setRawData] = useState('');
+  const [rawData, setRawData] = useState(
+    localStorage.getItem(RAW_DATA_KEY) || ''
+  );
   const [dataByDate, setDataByDate] = useState<{ [day: string]: Date[] }>({});
   const [data, setData] = useState<{ [day: string]: number }>();
   const [analysis, setAnalysis] = useState<Analysis>({});
@@ -46,6 +57,9 @@ export default function App() {
   const todayLeaveTime = getTodayLeaveTime(dataByDate);
   const [todayProgress, setTodayProgress] = useState(0);
   const [remainingTime, setRemainingTime] = useState('');
+  const [ignoreDates, setIgnoreDates] = useState<Date[]>(
+    JSON.parse(localStorage.getItem(IGNORE_DATES_KEY) || '[]') || []
+  );
 
   const timeSeries = dateKeys.map((key) => ({
     date: key,
@@ -58,15 +72,22 @@ export default function App() {
         : 'red',
   }));
 
-  const main = (raw: string) => {
-    setLoading(true);
+  const main = (raw: string, isShowLoading = true) => {
+    if (isShowLoading) {
+      setLoading(true);
+    }
     const { resultByDay } = scan(raw);
+    const filteredResultByDay = Object.keys(resultByDay).reduce((acc, key) => {
+      if (ignoreDates.some((d) => dayjs(key).isSame(d, 'date'))) return acc;
+      acc[key] = resultByDay[key];
+      return acc;
+    }, {} as { [day: string]: Date[] });
     setTimeout(() => {
       setLoading(false);
     }, 500);
-    const result = analyze(resultByDay);
+    const result = analyze(filteredResultByDay);
     setAnalysis(result);
-    setDataByDate(resultByDay);
+    setDataByDate(filteredResultByDay);
     setData(data);
   };
 
@@ -81,8 +102,25 @@ export default function App() {
     );
   };
 
+  const handleSelectIgnoreDate = (date: Date) => {
+    const isSelected = ignoreDates.some((s) => dayjs(date).isSame(s, 'date'));
+    if (isSelected) {
+      setIgnoreDates((current) =>
+        current.filter((d) => !dayjs(d).isSame(date, 'date'))
+      );
+    } else {
+      setIgnoreDates((current) => [...current, date]);
+    }
+  };
+
+  useEffect(() => {
+    main(rawData, false);
+    localStorage.setItem(IGNORE_DATES_KEY, JSON.stringify(ignoreDates));
+  }, [ignoreDates]);
+
   useEffect(() => {
     main(rawData);
+    localStorage.setItem('rawData', rawData);
   }, [rawData]);
 
   useEffect(() => {
@@ -131,28 +169,107 @@ export default function App() {
         <div
           style={{
             display: 'flex',
-            justifyItems: 'space-between',
-            alignItems: 'center',
+            gap: '2em',
           }}
         >
-          <h2 style={{ marginRight: 'auto' }}>Paste your logs here 👇</h2>
-          <Button
-            disabled={rawData === ''}
-            color='red'
-            onClick={() => {
-              setRawData('');
+          <div
+            style={{
+              flexGrow: 1,
             }}
           >
-            Clear all
-          </Button>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h2 style={{ marginRight: 'auto' }}>Paste your logs here 👇</h2>
+              <Button
+                disabled={rawData === ''}
+                color='red'
+                onClick={() => {
+                  setRawData('');
+                }}
+              >
+                Reset <RemoveIcon style={{ marginLeft: '0.5em' }} />
+              </Button>
+            </div>
+            <Textarea
+              value={rawData}
+              onChange={(e) => setRawData(e.target.value)}
+              autosize
+              maxRows={13}
+              autoFocus
+            />
+            {!rawData && (
+              <div>
+                <h2>Guideline</h2>
+                <ul>
+                  <li>Step 1: Go to HR Attendance Bot chat on Slack</li>
+                  <li>
+                    Step 2: Scroll to get older messages and copy all logs
+                  </li>
+                  <li>
+                    Step 3: Back to the tool interface and paste content into
+                    the text area
+                  </li>
+                  <li>Done ✅</li>
+                </ul>
+                <img
+                  src='https://lh3.googleusercontent.com/z4Arq8zdehq02PF43FNEAJCJ0lKrSOxpqMJyFtHcXyqYnFSOAj9se-QwGpaLMy_a_hQKvV6XvPrTkBZOA2ss9yM-P8sbLLg=rw-w0'
+                  alt=''
+                  style={{
+                    maxWidth: '100%',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          <div>
+            <h2 style={{ textAlign: 'center' }}>Ignore dates 🗓️</h2>
+            <Calendar
+              getDayProps={(date) => ({
+                selected: ignoreDates.some((s) =>
+                  dayjs(date).isSame(s, 'date')
+                ),
+                onClick: () => handleSelectIgnoreDate(date),
+              })}
+            />
+          </div>
         </div>
-        <Textarea
-          value={rawData}
-          onChange={(e) => setRawData(e.target.value)}
-          autosize
-          maxRows={10}
-          autoFocus
-        />
+        {ignoreDates.length > 0 && (
+          <>
+            <Divider style={{ marginTop: '1em' }} />
+            <div>
+              <h3>Ignored dates</h3>
+              <List>
+                {ignoreDates.map((date, index) => (
+                  <List.Item key={index}>
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        width: 75,
+                      }}
+                    >
+                      {dayjs(date).format('DD/MM/YYYY')}
+                    </div>
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        color: 'red',
+                        cursor: 'pointer',
+                        marginLeft: '1em',
+                      }}
+                      onClick={() => {
+                        setIgnoreDates((current) =>
+                          current.filter((d) => !dayjs(d).isSame(date, 'date'))
+                        );
+                      }}
+                    >
+                      <BackspaceIcon style={{ paddingTop: '0.25em' }} />
+                    </div>
+                  </List.Item>
+                ))}
+              </List>
+            </div>
+          </>
+        )}
+        {rawData && <Divider style={{ marginTop: '1em' }} />}
         {hasToday && (
           <div>
             <h2>Today</h2>
@@ -354,8 +471,59 @@ export default function App() {
               alt='page counter'
             />
           </a>
+          <a
+            className='github-button'
+            href='https://github.com/NoCtrlZ1110/attendance-analysis'
+            data-color-scheme='no-preference: light; light: light; dark: dark;'
+            data-icon='octicon-star'
+            data-size='large'
+            data-show-count='true'
+            aria-label='Star NoCtrlZ1110/attendance-analysis on GitHub'
+            style={{ marginLeft: '1em' }}
+          >
+            Star
+          </a>
         </footer>
       </Container>
     </MantineProvider>
   );
 }
+
+const BackspaceIcon = (props: any) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    width='24'
+    height='24'
+    viewBox='0 0 24 24'
+    fill='currentColor'
+    className='icon icon-tabler icons-tabler-filled icon-tabler-backspace'
+    {...props}
+  >
+    <path stroke='none' d='M0 0h24v24H0z' fill='none' />
+    <path d='M20 5a2 2 0 0 1 1.995 1.85l.005 .15v10a2 2 0 0 1 -1.85 1.995l-.15 .005h-11a1 1 0 0 1 -.608 -.206l-.1 -.087l-5.037 -5.04c-.809 -.904 -.847 -2.25 -.083 -3.23l.12 -.144l5 -5a1 1 0 0 1 .577 -.284l.131 -.009h11zm-7.489 4.14a1 1 0 0 0 -1.301 1.473l.083 .094l1.292 1.293l-1.292 1.293l-.083 .094a1 1 0 0 0 1.403 1.403l.094 -.083l1.293 -1.292l1.293 1.292l.094 .083a1 1 0 0 0 1.403 -1.403l-.083 -.094l-1.292 -1.293l1.292 -1.293l.083 -.094a1 1 0 0 0 -1.403 -1.403l-.094 .083l-1.293 1.292l-1.293 -1.292l-.094 -.083l-.102 -.07z' />
+  </svg>
+);
+
+const RemoveIcon = (props: any) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    width='24'
+    height='24'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    stroke-width='2'
+    stroke-linecap='round'
+    stroke-linejoin='round'
+    className='icon icon-tabler icons-tabler-outline icon-tabler-database-x'
+    {...props}
+  >
+    <path stroke='none' d='M0 0h24v24H0z' fill='none' />
+    <path d='M4 6c0 1.657 3.582 3 8 3s8 -1.343 8 -3s-3.582 -3 -8 -3s-8 1.343 -8 3' />
+    <path d='M4 6v6c0 1.657 3.582 3 8 3c.537 0 1.062 -.02 1.57 -.058' />
+    <path d='M20 13.5v-7.5' />
+    <path d='M4 12v6c0 1.657 3.582 3 8 3c.384 0 .762 -.01 1.132 -.03' />
+    <path d='M22 22l-5 -5' />
+    <path d='M17 22l5 -5' />
+  </svg>
+);
