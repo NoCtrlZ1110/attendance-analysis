@@ -11,7 +11,7 @@
     "predeploy": "yarn build",
     "deploy": "gh-pages -d dist"
   },
-  "homepage": "https://teko.vanhuy.dev/",
+  "homepage": "https://attendance.vanhuy.dev/",
   "dependencies": {
     "@mantine/charts": "^7.14.2",
     "@mantine/core": "^7.14.2",

@@ -77,17 +77,13 @@ export default function App() {
       setLoading(true);
     }
     const { resultByDay } = scan(raw);
-    const filteredResultByDay = Object.keys(resultByDay).reduce((acc, key) => {
-      if (ignoreDates.some((d) => dayjs(key).isSame(d, 'date'))) return acc;
-      acc[key] = resultByDay[key];
-      return acc;
-    }, {} as { [day: string]: Date[] });
+
     setTimeout(() => {
       setLoading(false);
     }, 500);
-    const result = analyze(filteredResultByDay);
+    const result = analyze(resultByDay, ignoreDates);
     setAnalysis(result);
-    setDataByDate(filteredResultByDay);
+    setDataByDate(resultByDay);
     setData(data);
   };
 
@@ -168,6 +164,18 @@ export default function App() {
         </header>
         <div
           style={{
+            color: '#d4380d',
+            background: '#fff2e8',
+            borderColor: '#ffbb96',
+            padding: '0.5em 1em',
+            borderRadius: '0.25em',
+          }}
+        >
+          ⚠️ DISCLAIMER: Data from the tool is for reference only, not official
+          HR data, and may differ from reality. ⚠️
+        </div>
+        <div
+          style={{
             display: 'flex',
             gap: '2em',
           }}
@@ -193,7 +201,7 @@ export default function App() {
               value={rawData}
               onChange={(e) => setRawData(e.target.value)}
               autosize
-              maxRows={13}
+              maxRows={15}
               autoFocus
             />
             {!rawData && (
@@ -222,6 +230,10 @@ export default function App() {
           </div>
           <div>
             <h2 style={{ textAlign: 'center' }}>Ignore dates 🗓️</h2>
+            <div style={{ maxWidth: 250, fontSize: '0.75em' }}>
+              Ignore days you have requested for leave, late arrivals, early
+              departures, etc. An ignored day will be counted as a full day
+            </div>
             <Calendar
               getDayProps={(date) => ({
                 selected: ignoreDates.some((s) =>
@@ -287,12 +299,12 @@ export default function App() {
               <div>
                 {remainingTime && (
                   <>
-                    <strong> {remainingTime}</strong> remaining
+                    <strong> {remainingTime}</strong> remaining to go home
                   </>
                 )}
               </div>
             </div>
-
+            <div style={{ marginBottom: '1em' }}>Today progress 👇</div>
             <Progress.Root size={100}>
               <Progress.Section
                 aria-label='Uploading progress'
@@ -460,11 +472,12 @@ export default function App() {
           style={{
             display: 'flex',
             justifyContent: 'center',
+            alignItems: 'center',
             marginTop: 'auto',
             padding: '1em',
           }}
         >
-          <a href='#' title='page counter'>
+          <a href='#' title='page counter' style={{ marginRight: '1em' }}>
             <img
               src='https://counter6.optistats.ovh/private/freecounterstat.php?c=a4sgglx4nkf9cctfk3usbf7kwshbg1cd'
               title='page counter'
@@ -479,7 +492,6 @@ export default function App() {
             data-size='large'
             data-show-count='true'
             aria-label='Star NoCtrlZ1110/attendance-analysis on GitHub'
-            style={{ marginLeft: '1em' }}
           >
             Star
           </a>

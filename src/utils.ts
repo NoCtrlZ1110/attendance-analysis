@@ -66,7 +66,10 @@ export const scan = (rawData: string) => {
   };
 };
 
-export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
+export const analyze = (
+  dataNeedAnalyze: { [day: string]: Date[] },
+  ignoreDates: Date[]
+) => {
   let lateCount = 0;
   let fullCount = 0;
   let smallerThan7 = 0;
@@ -76,6 +79,13 @@ export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
   for (const key in dataNeedAnalyze) {
     const duration = getValidDuration(dataNeedAnalyze, key);
     data[key] = duration;
+
+    // if day is in ignoreDates, count consider as full day
+    if (ignoreDates.some((d) => dayjs(key).isSame(d, 'date'))) {
+      fullCount++;
+      continue;
+    }
+
     if (duration < 8) {
       if (key !== dayjs().format('YYYY-MM-DD')) {
         lateCount++;
@@ -89,7 +99,7 @@ export const analyze = (dataNeedAnalyze: { [day: string]: Date[] }) => {
       fullCount++;
     }
   }
-  const latePercentage = (lateCount / totalDays) * 100;
+  const latePercentage = (lateCount / (lateCount + fullCount)) * 100;
   return {
     lateCount,
     fullCount,
